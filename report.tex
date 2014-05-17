@@ -2,7 +2,8 @@
 
 \usepackage[hidelinks]{hyperref}
 \usepackage[font={small}]{caption}
-\usepackge{geometry}
+\usepackage{poltakmacros}           % Personal macros included in file 'poltakmacros.sty'.
+\usepackage{geometry}
 
 \geometry{margin=2cm}
 
@@ -27,26 +28,81 @@
 
 \pagenumbering{arabic}
 
-% SECTIONS GO HERE
-\section{Introduction}
+% TODO: Split sections into different files
+\section{Introduction} % (fold)
+\label{sec:introduction}
+
+% section introduction (end)
 
 
-\section{Introduction to the multi-core CPU}
+\section{Introduction to the multi-core CPU} % (fold)
+\label{sec:introduction_to_the_multi_core_cpu}
+
+\subsection{The central processing unit} % (fold)
+\label{sub:the_central_processing_unit}
+The central processing unit --- hereby referred to as the CPU --- is a fundamental piece of hardware within modern computers that handles
+the fetching, decoding and execution of each instruction of a computer program~\cite{web:CPUWiki}. It handles the processing
+of these instructions through the use of two key components: the arithmetic logic unit --- hereby referred to as the ALU
+--- for basic arithmetical and logical operations, and the control unit --- hereby referred to as the CU --- for the input/output
+operations between the CPU and memory, along with the overall control of the fetch, decode and execute cycle. Given the
+physical hardware constraints, only a single instruction may be processed at any given time by a CPU.
+% subsection the_central_processing_unit (end)
+
+\subsection{The multi-core CPU} % (fold)
+\label{sub:the_multi_core_cpu}
+To define the multi-core CPU, it is perhaps important to first define the term ``core''. Like many terms in the area of computing,
+the term ``core'' is often misused or used with many different meanings attached to it. For the purposes of this paper, the
+term ``core'' simply refers to actual CPUs as defined in~\sectref{sub:the_central_processing_unit}.
+
+Given this definition of a core, the multi-core CPU can simply be defined as a piece of computing hardware that contains
+two or more cores. As the multi-core CPU contains more than one core, rather than being constrained to processing a single
+instruction at any given time, in theory it is possible to be processing $n$ instructions on an $n$-core CPU at any given time.
+
+Given what multi-core CPU hardware makes possible, since their introduction to consumers in the early 2000s, the multi-core
+CPU has changed the way programmers design their programs to take advantage of hardware. Programs that are designed with
+code concurrency in-mind now have advantages that were only ever available previously on systems that have multiple physical
+CPU chips.
+% subsection the_multi_core_cpu (end)
+
+\subsection{Multi-core CPU architecture} % (fold)
+\label{sub:multi_core_cpu_architecture}
+The most used multi-core CPU micro-architecture families in consumer computing today are arguably Intel's ``Core'' line
+and AMD's
+
+% subsection multi_core_cpu_architecture (end)
 
 
-\section{Programming the multi-core CPU}
+% section introduction_to_the_multi_core_cpu (end)
 
 
-\section{Introduction to the GPU}
+\section{Programming the multi-core CPU} % (fold)
+\label{sec:programming_the_multi_core_cpu}
+
+% section programming_the_multi_core_cpu (end)
 
 
-\section{Differences in programming the GPU}
+\section{Introduction to the GPU} % (fold)
+\label{sec:introduction_to_the_gpu}
+
+% section introduction_to_the_gpu (end)
 
 
-\section{Parallelism in the multi-core CPU and GPU}
+\section{Differences in programming the GPU} % (fold)
+\label{sec:differences_in_programming_the_gpu}
+
+% section differences_in_programming_the_gpu (end)
 
 
-\section{Conclusion}
+\section{Parallelism in the multi-core CPU and GPU} % (fold)
+\label{sec:parallelism_in_the_multi_core_cpu_and_gpu}
+
+% section parallelism_in_the_multi_core_cpu_and_gpu (end)
+
+
+\section{Conclusion} % (fold)
+\label{sec:conclusion}
+
+% section conclusion (end)
 
 
 \bibliographystyle{acm}

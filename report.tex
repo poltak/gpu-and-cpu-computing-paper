@@ -109,12 +109,14 @@ As an example of a Steamroller-based CPU, we will look at AMD's current flagship
 
 Something of note when looking at modern AMD processors is to note AMD's use of the marketing term ``APU'' --- short for Accelerated Processing Unit. This is essentially AMD's term for a GPU and CPU dual-offering on the same die~\cite{web:AMDAPU}, similar to what is provided by Intel's Haswell line of processors (as elaborated on in~\sectref{sub:intel_haswell_architecture}).
 
-The die layout for the Kaveri processors is quite different to what we have previously seen with Intel's Haswell processors. The most obvious difference is that the majority of the die is taken up by the GPU
+Like the Haswell i7, the Kaveri processors have four cores. Unlike the Haswell, the cores are split into two distinct ``dual-core'' units (each, of course, housing two separate cores). As the Kaveri line are also multi-level cache processors, each dual-core unit has its own L1 and L2 cache. The L1 cache is split into a 96 KB instruction cache for each dual-core unit and four separate 16 KB of data cache reserved for each of the cores~\cite{web:Guru3dKaveri}. The L2 cache is 2 MB large for each dual-core unit. Unlike the Haswell processors, there is no L3 cache present.
+
+Like the cache architecture, the die layout for the Kaveri processors, seen in~\figref{fig:kaveri-layout}, is quite different to what we have previously seen with Intel's Haswell processors. The most obvious difference is that the majority of the die is taken up by the GPU. This shows AMD's larger emphasis on competitive graphics with their ``APU'' direction~\cite{web:WikiAPU}.
 
 \begin{figure}[h]
   \centering
   \includegraphics[scale=0.5]{img/kaveri_die}
-  \caption{The AMD Kaveri quad-core CPU die layout.~\cite{web:Guru3dKaveri}}
+  \caption{The AMD Kaveri quad-core CPU die layout.~\cite{web:Guru3dKaveri} Note, the DDR3 PHY unit refers to the main memory controller.}
 \label{fig:kaveri-layout}
 \end{figure}
 % subsection amd_steamroller_architecture (end)

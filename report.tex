@@ -2,6 +2,7 @@
 
 \usepackage[hidelinks]{hyperref}
 \usepackage[font={small}]{caption}
+\usepackage{graphicx}
 \usepackage{poltakmacros}           % Personal macros included in file 'poltakmacros.sty'.
 \usepackage{geometry}
 
@@ -66,10 +67,59 @@ CPU chips.
 
 \subsection{Multi-core CPU architecture} % (fold)
 \label{sub:multi_core_cpu_architecture}
-The most used multi-core CPU micro-architecture families in consumer computing today are arguably Intel's ``Core'' line
-and AMD's
+The newest evolutions in multi-core CPU architecture families in modern consumer computing are arguably Intel's
+``Haswell'' and AMD's ``Steamroller'' lines of processors.
 
+Intel's Haswell is the fourth generation of their ``Core'' line of multi-processors, that places a larger focus on reducing power-consumption and improving performance of their on-chip graphics processing unit, or GPU~\cite{web:ForbesHaswell}. This point, specifically, will be elaborated on in further detail in later sections.
+
+AMD's Steamroller architecture is the third evolution of AMD's ``Bulldozer''
+architecture, a direct competitor to Intel's Haswell architecture implemented
+in their ``Core'' line of multi-core processors. Steamroller placed a larger focus on improving parallelism between the available cores~\cite{web:AMDCCCSlides}, while also attempting to address competitor Intel's area of dominance--- power
+consumption.
 % subsection multi_core_cpu_architecture (end)
+
+\subsection{Intel Haswell Core i7-4770K architecture} % (fold)
+\label{sub:intel_haswell_architecture}
+As an example of a Haswell CPU to specifically look at, we will take Intel's
+current flagship enthusiast model Haswell quad-core processor, the Core i7-4770K. While having four cores all on the same chip, this Core i7 also
+contains its own GPU on the chip. The Haswell i7 is a multi-level cache CPU, with each core having three levels of cache memory
+available to it; from fastest to slowest: L1, L2 and L3. Each core has its own
+dedicated 64 KB of L1 cache (split into 32 KB halves for separate data and instruction caches), 256 KB of L2 cache and all the cores share a much slower 8 MB of L3 cache~\cite{web:TomsHWCorei7}. The overall layout of the chip, as explained here, can be seen in~\figref{fig:haswell-layout}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.5]{img/haswell-layout}
+  \caption{The Intel Core i7-4770K quad-core CPU die layout.~\cite{web:TomHWCorei7DiePic}}
+\label{fig:haswell-layout}
+\end{figure}
+
+Something of note is how the i7-4770K enables pipelining of operations with its hardware. Before proceeding into pipeling, it is important to touch on the differences between instructions and operations: Instructions are decoded by the CPU into atomic parts which are known as micro-operations which use and require specific resources. These micro-operations are then queued into the ``Unified Reservation Station'' (URS) where they wait until their resources are available. The micro-operations are then dispatched from the URS to the appropriate execution port. This is all done ``out of order'' where operations are just dispatched whenever possible, rather than in a pre-determined order when there is no resource dependencies between operations~\cite{book:Corei7PerfAnalysis}. Hence, this is the specific implementation of CPU pipelining that is enabled on the Haswell architecture. As can be seen from~\figref{fig:haswell-new-ports}, Haswell has eight distinct execution ports, each supporting different operations. This allows a maximum of eight independent micro-operations to be executed each clock cycle~\cite{web:TomsHWCorei7}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.5]{img/new-ports}
+  \caption{Shows how operation out of order execution pipelining works in the Intel Core i7-4770K~\cite{web:TomsHWCorei7}. The Unified Reservation Station can be seen along with the i7's eight execution ports. New hardware additions to the Haswell architecture highlighted.}
+\label{fig:haswell-new-ports}
+\end{figure}
+% subsection intel_haswell_architecture (end)
+
+\subsection{AMD Steamroller/Kaveri architecture} % (fold)
+\label{sub:amd_steamroller_architecture}
+As an example of a Steamroller-based CPU, we will look at AMD's current flagship A10-7850K processor, which is based on the third evolution of the Steamroller architecture, codenamed ``Kaveri''.
+
+Something of note when looking at modern AMD processors is to note AMD's use of the marketing term ``APU'' --- short for Accelerated Processing Unit. This is essentially AMD's term for a GPU and CPU dual-offering on the same die~\cite{web:AMDAPU}, similar to what is provided by Intel's Haswell line of processors (as elaborated on in~\sectref{sub:intel_haswell_architecture}).
+
+The die layout for the Kaveri processors is quite different to what we have previously seen with Intel's Haswell processors. The most obvious difference is that the majority of the die is taken up by the GPU
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.5]{img/kaveri_die}
+  \caption{The AMD Kaveri quad-core CPU die layout.~\cite{web:Guru3dKaveri}}
+\label{fig:kaveri-layout}
+\end{figure}
+% subsection amd_steamroller_architecture (end)
+
+
 
 
 % section introduction_to_the_multi_core_cpu (end)

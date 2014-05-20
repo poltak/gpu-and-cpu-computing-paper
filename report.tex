@@ -3,6 +3,9 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage[font={small}]{caption}
 \usepackage{graphicx}
+\usepackage[lined,boxed]{algorithm2e}
+\usepackage{algpseudocode}
+\usepackage{mathtools}
 \usepackage{poltakmacros}           % Personal macros included in file 'poltakmacros.sty'.
 \usepackage{geometry}
 
@@ -121,16 +124,155 @@ Like the cache architecture, the die layout for the Kaveri processors, seen in~\
 \end{figure}
 % subsection amd_steamroller_architecture (end)
 
-
-
-
 % section introduction_to_the_multi_core_cpu (end)
+
 
 
 \section{Programming the multi-core CPU} % (fold)
 \label{sec:programming_the_multi_core_cpu}
 
+\subsection{Thinking parallel} % (fold)
+\label{sub:thinking_parallel}
+Having multiple cores available on a single chip greatly expands what is possible with the way programs are implemented and run on computers. As explained earlier in~\sectref{sub:the_multi_core_cpu}, on an $n$=core CPU, it is possible to be processing $n$ instructions concurrently at any given time.
+
+This concurrent execution of instructions that is possible with multi-core CPUs brings the possible benefits of parallel computing, and in-turn programming, to a far greater number of computers, and thus programmers.
+Before multi-core CPUs were available, parallel computing was reserved to more special-purpose computers with multiple physical CPUs (on different physical chips as opposed to a single die).
+
+While having the hardware there to support parallel computing on the one machine, the hardware cannot magically take the all the instructions from a program and spread them out perfectly across all the cores in a system to have a fully parallelised program. This is for a number of reasons, but a lot of the time it comes back to a primitive problem being because the underlying algorithm used in a program was not designed with parallelism in mind; everything is very sequential and imperative, often because that's the way the person the algorithm was designed by learned to think about these problems.
+Programming for multi-core CPUs not only requires a different style of programming, it requires the programmer to shift their mindset to think in a parallel fashion.
+% subsection thinking_parallel (end)
+
+\subsection{Example of a \vs{sequential}{parallel} algorithm} % (fold)
+\label{sub:example_of_a_vs}
+Take the task of doing a simple matrix multiplication on the following matrices, $matrix_A$ and $matrix_B$:
+
+\begin{displaymath}
+matrix_A =
+  \begin{pmatrix}
+    a_1 & b_1 & c_1 \\
+    a_2 & b_2 & c_2
+  \end{pmatrix}
+\end{displaymath}
+
+\begin{displaymath}
+matrix_B =
+  \begin{pmatrix}
+    a_1 & b_1 \\
+    a_2 & b_2 \\
+    a_3 & b_3
+  \end{pmatrix}
+\end{displaymath}
+
+If you were to do this on pen and paper, most people would probably do it following a method similar to the algorithm
+shown in~\algoref{algo:matrix_mult_seq}. This method works fine for how we would naturally do it, therefore a lot of
+programmers who do not know any better would perhaps write code with a similar underlying algorithm to this. That is fine,
+and the computer would get the correct answer eventually after computing all $T$ the dot products, placing them where they
+are meant to go in $matrix_C$, so let's say in $T$-time. Tough thinking about the problem some more, one can see that each dot product calculation
+is completely independent of any other dot product calculation, only needing to share read access of values from the input
+matrices. As the outcome of these dot product calculations are independent of one-another, if there were two different people,
+or computers, working on the problem with $T$ dot products at the same time, we could save roughly half the calculation time by splitting the
+number of dot products that need to be calculated between the two of them, letting us do the work in $T/2$-time. Now take the same problem but this time with
+$n$ available computers to compute dot products. If we could split the total number of dot products, $T$, evenly between
+the $n$ computers, it would be possible to get a $T/n$ speed-up in compute time. This is what is meant by computing in
+parallel and what is very much possible with multi-core CPUs. A parallel version of~\algoref{algo:matrix_mult_seq} is
+shown in~\algoref{algo:matrix_mult_para}.
+
+\begin{algorithm}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+
+  \Input{Two matrices, $matrix_A$ and $matrix_B$}
+  \Output{A single matrix, $matrix_C$}
+  \BlankLine
+  \ForEach{column $C$ in $matrix_B$}{
+    \ForEach{row $R$ in $matrix_A$}{
+      get dot product of $C$ and $R$
+    }
+  }
+\caption{A sequential high-level algorithm for multiplying matrices.}
+\label{algo:matrix_mult_seq}
+\end{algorithm}
+
+\begin{algorithm}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+\SetKwProg{Fn}{Function}{is}{end}
+\SetKwFunction{FnWorker}{calculateDotProducts}
+
+  \Input{Two matrices, $matrix_A$ and $matrix_B$, pool of workers, $workerPool$}
+  \Output{A single matrix, $matrix_C$}
+  \BlankLine
+  $numWorkers = getNumAvailableWorkers()$
+
+  $numDotProducts = getNumDotProducts()$
+
+  \BlankLine
+  \ForEach{worker $W$ in $workerPool$}{
+    $dotProducts[] = getNewDotProducts(numDotProducts/numWorkers)$
+
+    call calculateDotProducts(dotProducts[]) on $W$
+  }
+
+  \BlankLine
+  \BlankLine
+  \Fn{\FnWorker{dotProductCalculations[]}}{
+    \ForEach{dot product calculation $DP$ in $dotProductCalculations$}{
+      perform $DP$
+    }
+  }
+\caption{A parallel high-level algorithm for multiplying matrices.}
+\label{algo:matrix_mult_para}
+\end{algorithm}
+
+Something of note is that there are limits to the benefits the parallel algorithm has over the sequential algorithm.
+If the number of workers is greater than the number of dot product calculations that need to be performed, there
+are going to be some workers that have nothing to do. This means that any increase in the number of workers after this point
+is meaningless in-terms of making computations faster.
+
+Furthermore, if there is only a single worker, then the computations of dot products are essentially all going to be performed
+sequentially, just as in the sequential algorithm.
+% subsection example_of_a_vs (end)
+
+\subsection{Models for enabling of parallel and concurrent programming} % (fold)
+\label{sub:enablers_for_programming_in_parallel}
+The idea and theory behind the benefits of programming in parallel is all well and good, although there need to be some
+underlying programming models that to enable these parallel algorithms to be implemented.
+
+\subsubsection{Multiple threads of execution} % (fold)
+\label{ssub:threads_execution}
+One notable, and very widely
+used, method to allow concurrent and, in-turn, parallel programming is through the use of threads. Threads are now a core
+underlying part of all widely-used modern operating systems. Threads allow the programmer to specify multiple threads
+of execution to run concurrent to one another to perform some particular logic. At a lower-level of the operating system,
+beyond the area of the application programmer's concern, the kernel handles the scheduling of all these different concurrent threads
+to be run on different cores if possible. Running the threads of different cores means that they can be run truly in parallel
+rather than concurrently sharing processor time on a single core. There are numerous APIs available to applications programmers
+in different programming languages
+allowing them to implement threads in their applications allowing the possibility of parallel programs on multi-core systems.
+Some popular APIs include:
+\begin{itemize}
+  \item POSIX Threads (commonly referred to as ``Pthreads'')
+  \item Java's ``java.util.concurrent'' package
+  \item .NET's Thread Pool API
+\end{itemize}
+% subsubsection subsubsection_name (end)
+
+\subsubsection{Message passing between processes} % (fold)
+\label{ssub:message_passing_between_processes}
+The concept of message passing is simply that; the passing of messages between processes. Message passing as a concept is
+not exactly a model to allow parallel programming, although used indirectly, it makes concurrent and parallel programming
+possible. If there are multiple processes running on a multi-core machine, perhaps some processes on different cores, by
+operating system design, they are generally completely isolated from one another in terms of instructions and data. Message
+passing lets these independent processes communicate and thus similar concurrency that we've seen in threads can be achieved.
+Another important topic related to parallel computing in general, although not directly to multi-core CPUs, is that a
+properly configured message passing system can allow parallel distributed computing, for example over networks, and abstract
+it in such a way that the programmer need not be concerned about the host computer for particular processes. One notable
+message passing system that does exactly this is Message Passing Interface (MPI), which has become somewhat of an unofficial
+standard for message passing.
+% subsubsection message_passing_between_processes (end)
+
+% subsection enablers_for_programming_in_parallel (end)
+
 % section programming_the_multi_core_cpu (end)
+
 
 
 \section{Introduction to the GPU} % (fold)

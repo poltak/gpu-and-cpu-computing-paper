@@ -81,15 +81,15 @@ in their ``Core'' line of multi-core processors. Steamroller placed a larger foc
 consumption.
 % subsection multi_core_cpu_architecture (end)
 
-\subsection{Intel Haswell Core i7-4770K architecture} % (fold)
-\label{sub:intel_haswell_architecture}
+\subsubsection{Intel Haswell Core i7-4770K architecture} % (fold)
+\label{subsub:intel_haswell_architecture}
 As an example of a Haswell CPU to specifically look at, we will take Intel's
 current flagship enthusiast model Haswell quad-core processor, the Core i7-4770K. While having four cores all on the same chip, this Core i7 also
 contains its own GPU on the chip. The Haswell i7 is a multi-level cache CPU, with each core having three levels of cache memory
 available to it; from fastest to slowest: L1, L2 and L3. Each core has its own
 dedicated 64 KB of L1 cache (split into 32 KB halves for separate data and instruction caches), 256 KB of L2 cache and all the cores share a much slower 8 MB of L3 cache~\cite{web:TomsHWCorei7}. The overall layout of the chip, as explained here, can be seen in~\figref{fig:haswell-layout}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \centering
   \includegraphics[scale=0.5]{img/haswell-layout}
   \caption{The Intel Core i7-4770K quad-core CPU die layout.~\cite{web:TomHWCorei7DiePic}}
@@ -98,7 +98,7 @@ dedicated 64 KB of L1 cache (split into 32 KB halves for separate data and instr
 
 Something of note is how the i7-4770K enables pipelining of operations with its hardware. Before proceeding into pipeling, it is important to touch on the differences between instructions and operations: Instructions are decoded by the CPU into atomic parts which are known as micro-operations which use and require specific resources. These micro-operations are then queued into the ``Unified Reservation Station'' (URS) where they wait until their resources are available. The micro-operations are then dispatched from the URS to the appropriate execution port. This is all done ``out of order'' where operations are just dispatched whenever possible, rather than in a pre-determined order when there is no resource dependencies between operations~\cite{book:Corei7PerfAnalysis}. Hence, this is the specific implementation of CPU pipelining that is enabled on the Haswell architecture. As can be seen from~\figref{fig:haswell-new-ports}, Haswell has eight distinct execution ports, each supporting different operations. This allows a maximum of eight independent micro-operations to be executed each clock cycle~\cite{web:TomsHWCorei7}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \centering
   \includegraphics[scale=0.5]{img/new-ports}
   \caption{Shows how operation out of order execution pipelining works in the Intel Core i7-4770K~\cite{web:TomsHWCorei7}. The Unified Reservation Station can be seen along with the i7's eight execution ports. New hardware additions to the Haswell architecture highlighted.}
@@ -106,17 +106,17 @@ Something of note is how the i7-4770K enables pipelining of operations with its 
 \end{figure}
 % subsection intel_haswell_architecture (end)
 
-\subsection{AMD Steamroller/Kaveri architecture} % (fold)
-\label{sub:amd_steamroller_architecture}
+\subsubsection{AMD Steamroller/Kaveri architecture} % (fold)
+\label{subsub:amd_steamroller_architecture}
 As an example of a Steamroller-based CPU, we will look at AMD's current flagship A10-7850K processor, which is based on the third evolution of the Steamroller architecture, codenamed ``Kaveri''.
 
-Something of note when looking at modern AMD processors is to note AMD's use of the marketing term ``APU'' --- short for Accelerated Processing Unit. This is essentially AMD's term for a GPU and CPU dual-offering on the same die~\cite{web:AMDAPU}, similar to what is provided by Intel's Haswell line of processors (as elaborated on in~\sectref{sub:intel_haswell_architecture}).
+Something of note when looking at modern AMD processors is to note AMD's use of the marketing term ``APU'' --- short for Accelerated Processing Unit. This is essentially AMD's term for a GPU and CPU dual-offering on the same die~\cite{web:AMDAPU}, similar to what is provided by Intel's Haswell line of processors (as elaborated on in~\sectref{subsub:intel_haswell_architecture}).
 
 Like the Haswell i7, the Kaveri processors have four cores. Unlike the Haswell, the cores are split into two distinct ``dual-core'' units (each, of course, housing two separate cores). As the Kaveri line are also multi-level cache processors, each dual-core unit has its own L1 and L2 cache. The L1 cache is split into a 96 KB instruction cache for each dual-core unit and four separate 16 KB of data cache reserved for each of the cores~\cite{web:Guru3dKaveri}. The L2 cache is 2 MB large for each dual-core unit. Unlike the Haswell processors, there is no L3 cache present.
 
 Like the cache architecture, the die layout for the Kaveri processors, seen in~\figref{fig:kaveri-layout}, is quite different to what we have previously seen with Intel's Haswell processors. The most obvious difference is that the majority of the die is taken up by the GPU. This shows AMD's larger emphasis on competitive graphics with their ``APU'' direction~\cite{web:WikiAPU}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \centering
   \includegraphics[scale=0.5]{img/kaveri_die}
   \caption{The AMD Kaveri quad-core CPU die layout.~\cite{web:Guru3dKaveri} Note, the DDR3 PHY unit refers to the main memory controller.}
@@ -277,6 +277,155 @@ standard for message passing.
 
 \section{Introduction to the GPU} % (fold)
 \label{sec:introduction_to_the_gpu}
+
+\subsection{The graphics processing unit} % (fold)
+\label{sub:the_graphics_processing_unit}
+The graphics processing unit --- hereby referred to as the GPU --- is a specialised processor designed to facilitate the
+output of images and computer graphics through means of rapidly manipulating memory~\cite{web:WikiGPU}. Traditionally,
+GPUs have been used since the early 1980s to perform various computer graphics operations independent of the CPU, allowing
+the CPU to focus on traditional CPU operations, as explained in~\sectref{sec:introduction_to_the_multi_core_cpu}. These
+computer graphics operations originally consisted of relatively simple operations such as the drawing of lines, filling
+specified areas in a framebuffer. Since then, GPUs have been adapted for use with much more intensive tasks such as
+the rendering of three-dimensional graphics in movies, or even the realtime calculating and drawing of three-dimensional
+video game graphics. While far more processing intensive, these tasks may be using many sequences of the same underlying
+graphics operations they always have done. While certainly being impressive, facilitating the output of fancy graphics is
+not the only thing GPUs are used for. As we will soon see, through an analysis of their underlying architecture, GPUs
+offer very impressive power and possibilities in the field parallel computing that simply cannot, at present, be found
+in offerings from CPUs.
+
+Note that there is an important difference between the terms ``GPU'' and ``graphics card'', which can often be found
+being used interchangebly in places such as news articles, marketing information, and online message boards. A GPU refers
+to the actual graphics processing chip, which are often present on all graphics cards. Although a computer may also have
+a GPU if it does not have a discrete graphics card. As was noted in~\sectref{sub:multi_core_cpu_architecture}, GPUs are
+often present on the same chip as the CPU in many modern CPU offerings from companies such as AMD or Intel. This is
+often referred to as ``integrated graphics'' (as opposed to ``discrete graphics'').
+% subsection the_graphics_processing_unit (end)
+
+\subsection{GPU architecture} % (fold)
+\label{sub:gpu_architecture}
+The general GPU architecture differs quite substantially from a general CPU architecture, what was seen
+in~\sectref{sub:multi_core_cpu_architecture}. One of the most obvious differences is the number of processing cores
+that are available to both. As we have seen in CPUs, they were originally designed as single-core pieces of hardware,
+before it became more common to sell them with multiple cores. Although as the number of cores that comes standard on
+CPUs seems to be increasing as the years go on, most modern consumer CPUs nowdays have four or eight cores. When we
+look at GPUs, most common modern consumer GPUs ship with thousands of cores on the single chip (see~\figref{fig:gpu-vs-cpu}).
+Of course, these cores are considerably different to those cores found on CPU chips.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.5]{img/cpu-and-gpu}
+  \caption{GPUs contain large arrays of thousands of cores, allowing them to partition workloads amongst the cores,
+  having more potential to be parallel programmed. CPUs contain a far smaller amount of more specialised cores, more
+  optised for performing sequential tasks.~\cite{web:NvidiaCPUvsGPU}}
+\label{fig:gpu-vs-cpu}
+\end{figure}
+
+CPU cores are more optimised for sequential serial processing of instructions, while GPU cores are a lot smaller, have
+far less complicated circuitry and are designed to handle more simple tasks in a simultaneous fashion~\cite{web:NvidiaGPUComputing}.
+
+Some very recent and widely used evolutions in modern consumer GPU architectures would have to Nvidia's very recent Maxwell
+microarchitecture and AMD's Sea Island microarchitecture.
+
+Nvidia's Maxwell architecture is Nvidia's successor for their widely used Kepler architecture. It is currently, as of
+mid 2014, being used in Nvidia's GeForce 700 Series consumer GPUs, and while not offering too much new functionality
+from the predecessor architecture, Kepler, it has a large focus on power savings and increasing the performance given
+per watt consumed~\cite{whitepaper:NvidiaMaxwell}.
+
+AMD's Sea Islands architecture is one of AMD's newest implementations of their ``Graphics Core Next'' (GCN) GPU
+architecture. The GCN architecture has been in use as the basis of AMD GPUs since late 2011, hence a lot of the information
+presented here on the Sea Islands family of GPUs is also relevant to other GCN GPUs~\cite{web:AnandGCNPreview}. Sea Islands,
+specifically, was used by AMD for their Radeon HD 8000 consumer series of GPUs.
+
+\subsubsection{Nvidia's Maxwell architecture} % (fold)
+\label{ssub:nvidia_maxwell_architecture}
+As a specific example of a Maxwell implementation, we can have a look at Nvidia's relatively new GM107 GPU which ships
+with Nvidia's new GeForce GTX 750 Ti graphics card, commercially available.
+
+The way the GPU is laid out is
+by having a single Graphics Processing Cluster (GPC), which is essentially a cluster of all the cores available within the GPU.\@
+Inside the GPC, the cores are separated into five groups called Maxwell Streaming Multiprocessors (SMMs), each of which have
+are arbitrated by the GPC's Raster Engine. The GPC then has its own 2048 KB L2 cache (which is shared between all the SMMs
+contained inside the GPC). Of course, the GPU needs access to larger memory levels which is facilitated through the use of dual
+64-bit memory controllers~\cite{whitepaper:NvidiaMaxwell}. This can all be seen from the block diagram shown in~\figref{fig:maxwell-gm107}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.3]{img/maxwell-chip}
+  \caption{Nvidia's Maxwell based GM107 GPU chip layout.~\cite{whitepaper:NvidiaMaxwell}}
+\label{fig:maxwell-gm107}
+\end{figure}
+
+Going down another level into the Maxwell Streaming Multiprocessors, each SMM has a large number of cores split up into
+four main groups, along with a large instruction cache, and two L1 caches, each of which is shared by two of the four
+distinct groups of cores. Each of these groups of cores has its own instruction buffer, warp scheduler, dispatch units and a large
+register file. Essentially what these components do is facilitate the scheduling and dispatching of instructions from the
+larger instruction cache to specific cores to be processed. Another component of note in these SMMs is the presence of
+64 KB block of shared memory. This shared memory is shared between each of the distinct core groups, offering even more
+possibility of parallel processing~\cite{whitepaper:NvidiaMaxwell}. The specifics of an SMM model are depicted in~\figref{fig:maxwell-smm}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.25]{img/maxwell-smm}
+  \caption{Nvidia's Maxwell Streaming Multiprocessor layout.~\cite{whitepaper:NvidiaMaxwell}}
+\label{fig:maxwell-smm}
+\end{figure}
+
+Something of note is that the GM107 alone houses 640 cores, all of which can be used to perform different operations
+simultaneously. As discussed in~\sectref{sec:programming_the_multi_core_cpu}, with a highly parallelised algorithm or
+program, the sheer number of cores accessible here is really going to become an advantage over the same task being performed
+on far less parallel-optimised multi-core CPU hardware.
+% subsubsection nvidia_maxwell_architecture (end)
+
+\subsubsection{AMD's Sea Islands/Graphics Core Next architecture} % (fold)
+\label{ssub:amd_s_sea_islands_graphics_core_next_architecture}
+Rather than looking at a specific Sea Islands implementation, we will look at a more generic overview of what is offered
+by any Sea Islands based GPU.
+
+The way the GPU architecture is laid out is by assembling all of the individual cores into a large array known as the
+Data-Parallel Processor (DPP) array. The DPP array can be thought of as being akin to the Nvidia Maxwell's group of SMMs,
+and is essentially where the main processing power of the GPU lies. Instructions are fed into the DPP array through the
+use of a Command Processor in conjunction with a dispatcher component. Shared between the entire DPP array is a bus known
+as the CrossBar which facilitates access to the different L2 caches.
+The L2 caches are then
+connected to a single memory controller allowing direct memory access back to larger memory devices~\cite{reference:AMDSeaIslandsISA}.
+This can all be visualised in~\figref{fig:sea-islands-chip}, although it is slightly more confusing than Nvidia's Maxwell
+chip layout.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.3]{img/sea-islands-chip}
+  \caption{AMD's Sea Islands GPU chip layout.~\cite{reference:AMDSeaIslandsISA}}
+\label{fig:sea-islands-chip}
+\end{figure}
+
+Going deeper into the Data-Parallel Processor, each DPP has $n$ number of single instruction, multiple data components
+(SIMDs), each of which contains 64 cores (although here they are known simply as ``processors''). Each of these cores has
+its own general purpose data register and access to the SIMD's 32 KB of shared memory. On top of this per-SIMD shared memory,
+there is also the 64 KB Global Data Share (GDS), which is shared between all SIMDs. The GDS also has access to each
+of the SIMD's L1 texture caches~\cite{reference:AMDSeaIslandsISA}. This can all be seen in~\figref{fig:sea-islands-sm}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.3]{img/sea-islands-sm}
+  \caption{AMD's Sea Islands GPU Stream Processor layout.~\cite{reference:AMDSeaIslandsISA}}
+\label{fig:sea-islands-sm}
+\end{figure}
+
+% subsubsection amd_s_sea_islands_graphics_core_next_architecture (end)
+
+\subsubsection{Distinctions between the GPU architectures and CPU architectures} % (fold)
+\label{ssub:distinctions_between_the_gpu_architectures_and_cpu_architectures}
+While both GPU architectures may have differently named components, we can see a very similar underlying concepts between
+the two that  are quite different to the way the previously analysed CPU architectures are designed. Most notable, as
+previously mentioned, is the greatly increased number of distinct cores, or simply elements of processing in general.
+Because of this emphasis on a greater number of processing cores in the GPUs, we also see an emphasis on architectural
+components such as shared memory between the cores, grouping of cores into arrays and different super-collections of cores.
+Each of these collections also have some form of shared memory. There also was, of course, an emphasis on components
+concerned with the dispatch and scheduling of instructions. Without this type of organisation in the underlying architecture,
+the hardware would have a very hard time facilitating such largely parallel use-cases.
+% subsubsection distinctions_between_the_gpu_architectures_and_cpu_architectures (end)
+
+% subsection gpu_architecture (end)
 
 % section introduction_to_the_gpu (end)
 

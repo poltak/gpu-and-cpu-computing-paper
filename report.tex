@@ -22,9 +22,18 @@
 \thispagestyle{empty}
 
 \begin{abstract}
+Multi-core CPUs and GPUs are commonly found hardware components in most consumer laptop, desktop and tablet computers,
+and even modern cellphones. They can both be thought of as components providing processing power to their host device,
+although they provide processing power in very different ways. A lot of these differences are reflections of their
+underlying hardware architecture which differ greatly from one another, facilitating both different methods of processing
+and even different methods of programming them.
+
+This paper looks at these differences in detail, going deep into the underlying hardware architectures of GPUs and CPUs.
+Various case studies are done using modern, as of mid-2014, consumer available hardware components, highlighting how
+they work, how they can be programmed, and how all of these aspects differ between the different example hardware.
 \end{abstract}
 \smallskip
-\noindent \textbf{Keywords.} blah, blah, blah
+\noindent \textbf{Keywords.} parallel computing, CPU, GPU, core, processor architecture, heterogeneous computing
 \newpage
 \pagenumbering{roman}
 \tableofcontents
@@ -32,11 +41,26 @@
 
 \pagenumbering{arabic}
 
-% TODO: Split sections into different files
 \section{Introduction} % (fold)
 \label{sec:introduction}
+For this technical report, the analysis of the relevant pieces of hardware will be split into the following sections:
+\begin{itemize}
+  \item An introduction to multi-core CPUs, including their architecture, and differences between various current models
+  \item A look at the ways multi-core CPUs can be programmed, that differ to the more traditional single-core CPU
+  \item An introduction to GPUs, including their architecture and the differences in CPU and GPU architectures
+  \item A look at the ways GPUs can be programmed, and how it differs from programming CPUs
+  \item How GPUs and CPUs work together in modern computer systems
+\end{itemize}
+
+The report will put a lot of emphasis on the differences between all these different hardware components, to attempt to
+avoid confusion about their roles in the modern computing system, and to show the benefits of different categories of
+hardware. The report will also look at the possibility of whether or not a certain category of processor could ever
+supersede the other, and the possibilities of having these separate categories of processors complementing the
+processing power of the other.
 
 % section introduction (end)
+
+\newpage
 
 
 \section{Introduction to the multi-core CPU} % (fold)
@@ -96,7 +120,7 @@ dedicated 64 KB of L1 cache (split into 32 KB halves for separate data and instr
 \label{fig:haswell-layout}
 \end{figure}
 
-Something of note is how the i7-4770K enables pipelining of operations with its hardware. Before proceeding into pipeling, it is important to touch on the differences between instructions and operations: Instructions are decoded by the CPU into atomic parts which are known as micro-operations which use and require specific resources. These micro-operations are then queued into the ``Unified Reservation Station'' (URS) where they wait until their resources are available. The micro-operations are then dispatched from the URS to the appropriate execution port. This is all done ``out of order'' where operations are just dispatched whenever possible, rather than in a pre-determined order when there is no resource dependencies between operations~\cite{book:Corei7PerfAnalysis}. Hence, this is the specific implementation of CPU pipelining that is enabled on the Haswell architecture. As can be seen from~\figref{fig:haswell-new-ports}, Haswell has eight distinct execution ports, each supporting different operations. This allows a maximum of eight independent micro-operations to be executed each clock cycle~\cite{web:TomsHWCorei7}.
+Something of note is how the i7-4770K enables pipelining of operations with its hardware. Before proceeding into pipelining, it is important to touch on the differences between instructions and operations: Instructions are decoded by the CPU into atomic parts which are known as micro-operations which use and require specific resources. These micro-operations are then queued into the ``Unified Reservation Station'' (URS) where they wait until their resources are available. The micro-operations are then dispatched from the URS to the appropriate execution port. This is all done ``out of order'' where operations are just dispatched whenever possible, rather than in a pre-determined order when there is no resource dependencies between operations~\cite{book:Corei7PerfAnalysis}. Hence, this is the specific implementation of CPU pipelining that is enabled on the Haswell architecture. As can be seen from~\figref{fig:haswell-new-ports}, Haswell has eight distinct execution ports, each supporting different operations. This allows a maximum of eight independent micro-operations to be executed each clock cycle~\cite{web:TomsHWCorei7}.
 
 \begin{figure}[ht]
   \centering
@@ -126,6 +150,8 @@ Like the cache architecture, the die layout for the Kaveri processors, seen in~\
 
 % section introduction_to_the_multi_core_cpu (end)
 
+
+\newpage
 
 
 \section{Programming the multi-core CPU} % (fold)
@@ -274,6 +300,8 @@ standard for message passing.
 % section programming_the_multi_core_cpu (end)
 
 
+\newpage
+
 
 \section{Introduction to the GPU} % (fold)
 \label{sec:introduction_to_the_gpu}
@@ -294,7 +322,7 @@ offer very impressive power and possibilities in the field parallel computing th
 in offerings from CPUs.
 
 Note that there is an important difference between the terms ``GPU'' and ``graphics card'', which can often be found
-being used interchangebly in places such as news articles, marketing information, and online message boards. A GPU refers
+being used interchangeably in places such as news articles, marketing information, and online message boards. A GPU refers
 to the actual graphics processing chip, which are often present on all graphics cards. Although a computer may also have
 a GPU if it does not have a discrete graphics card. As was noted in~\sectref{sub:multi_core_cpu_architecture}, GPUs are
 often present on the same chip as the CPU in many modern CPU offerings from companies such as AMD or Intel. This is
@@ -307,7 +335,7 @@ The general GPU architecture differs quite substantially from a general CPU arch
 in~\sectref{sub:multi_core_cpu_architecture}. One of the most obvious differences is the number of processing cores
 that are available to both. As we have seen in CPUs, they were originally designed as single-core pieces of hardware,
 before it became more common to sell them with multiple cores. Although as the number of cores that comes standard on
-CPUs seems to be increasing as the years go on, most modern consumer CPUs nowdays have four or eight cores. When we
+CPUs seems to be increasing as the years go on, most modern consumer CPUs nowadays have four or eight cores. When we
 look at GPUs, most common modern consumer GPUs ship with thousands of cores on the single chip (see~\figref{fig:gpu-vs-cpu}).
 Of course, these cores are considerably different to those cores found on CPU chips.
 
@@ -429,6 +457,8 @@ the hardware would have a very hard time facilitating such largely parallel use-
 
 % section introduction_to_the_gpu (end)
 
+
+\newpage
 
 \section{Differences in programming the GPU} % (fold)
 \label{sec:differences_in_programming_the_gpu}
@@ -578,6 +608,8 @@ threads, blocks of threads, and grids. The memory hierarchy can be viewed in mor
 % section differences_in_programming_the_gpu (end)
 
 
+\newpage
+
 \section{How the multi-core CPU and GPU can work together} % (fold)
 \label{sec:parallelism_in_the_multi_core_cpu_and_gpu}
 
@@ -628,14 +660,20 @@ task for a GPU core to perform.
 
 % section parallelism_in_the_multi_core_cpu_and_gpu (end)
 
+\newpage
+
 
 \section{Conclusion} % (fold)
-Through looking at graphics processing units (GPUs) and variable-core central processing units (CPUs), we can see how
-they both vary considerably in underlying hardware architecture and general use-cases. Through the concept of heterogeneous
-computing, it is clear how they
 \label{sec:conclusion}
+Through looking at graphics processing units (GPUs) and variable-core central processing units (CPUs), we can see how
+they both vary considerably in underlying hardware architecture and, as a consequence, general use-cases. Through the
+concept of heterogeneous computing, it is clear how both hardware components have a place in modern computing and how
+one does not, and most probably will not, supersede the other. They would be better thought of as complementary components
+to one another in the area of heterogeneous parallel computing.
 
 % section conclusion (end)
+
+\newpage
 
 
 \bibliographystyle{acm}

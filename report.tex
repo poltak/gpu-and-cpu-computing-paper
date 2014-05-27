@@ -433,6 +433,158 @@ the hardware would have a very hard time facilitating such largely parallel use-
 \section{Differences in programming the GPU} % (fold)
 \label{sec:differences_in_programming_the_gpu}
 
+\subsection{Why the CPU has not been abandoned for the GPU} % (fold)
+\label{sub:why_programs_aren_t_written_just_for_gpus_rather_than_cpus}
+After seeing the massively parallel processing power made possible through the GPU, one may naturally ask the question:
+``Why don't we just target our programs toward the GPU to take advantage of that parallelism?''. As we have already seen,
+the CPU and the GPU have very different architectures and are thus optimised for completely different tasks; the GPU
+should not just be thought of as a substitute for the CPU.
+
+Furthermore, there is the problem that not every task can be parallelised; just like in real-life, there will be times when
+no work can proceed until another piece of work that the current one depends on has first been completed. This is often encountered
+in programs that have to wait for data to be received. For example, going back to the matrix multiplication example in
+~\sectref{sub:example_of_a_vs}, the entire first part of the algorithm is done serially and there will be no performance gain
+over the sequential algorithm until that serial part is first taken care of, thus setting up the parallel part to be run.
+
+Additionally, less related to the actual hardware architecture and underlying algorithms of software, there is also the
+unfortunate aspect that programming a GPU is significantly different than programming a CPU, and as arguably fewer programmers
+have had experience actually programming a GPU, this poses a barrier to adoption of more ``GPU-accelerated'' programs.
+The way of programming a GPU involves new languages, extensions of existing languages, and even completely new programming
+paradigms and ways of thinking about code. The reason for this difference does relate back to the architectural differences
+in GPUs and CPUs in the way that these different ways of programming GPUs directly relate expressing routines in parallel
+that existing languages and programming paradigms simply did not facilitate, or make it too unnatural. This leads on to
+the topic of general purpose computing on GPUs (GPGPU).
+
+% subsection why_programs_aren_t_written_just_for_gpus_rather_than_cpus (end)
+
+\subsection{General purpose computing on GPUs, or GPGPU} % (fold)
+\label{sub:general_purpose_computing_on_gpus_or_gpgpu}
+While GPUs were originally designed with computer graphics functionality in mind, GPUs are now often used for general
+purpose computing tasks that were traditionally left for CPUs~\cite{web:WikiGPGPU}. Ideally these tasks would involve
+large parallelism to get the most benefit out of using a GPU, else they would be better left to be serially processed
+on a CPU. GPUs can essentially be thought of as large scale stream processors, meaning that they are ideal for parallel
+processing involving the execution of a single function over many different elements of data in a set of data (the stream).
+The perfect application for GPGPU is then those applications which involve large streams of data with minimal to no
+dependencies between those elements of data~\cite{Buck:2004:BGS:1015706.1015800}. To facilitate GPGPU, high-level languages
+and frameworks have been developed. The arguably most popular modern offerings to facilitate GPGPU are the open-source
+Open Computing Language --- more commonly referred to as ``OpenCL'' --- and the Nvidia's proprietary Compute Unified
+Device Architecture --- more commonly referred to as just ``CUDA''. CUDA only supports Nvidia GPUs~\cite{web:NvidiaCUDACompat},
+although is still reasonably popular, while OpenCL supports a far larger range of GPUs from different vendors, including
+AMD, Nvidia, Intel and IBM~\cite{web:KhronosOpenCLCompat}.
+
+
+\subsubsection{Overview of OpenCL} % (fold)
+\label{ssub:overview_of_opencl}
+OpenCL, as previously stated, is an open-source framework for facilitating GPGPU. While facilitating GPGPU, OpenCL's bigger
+aim to make heterogeneous computing more of a reality~\cite{slides:KhronosOpenCLOverview}. That is, seamlessly integrating general CPU operation with the operation
+of GPUs in the overall system. For example, passing all serial operations straight to the CPU which then sets up all parallel
+operations to run on the GPU would be ideal heterogeneous computing in which each piece of hardware performs the task
+that it is optimised for.
+
+OpenCL defines its language as a subset of ISO C99, with extensions. A function written in this language is referred
+to by the somewhat confusing name of a ``kernel''. While it may look a lot like standard C99 code, the way OpenCL executes
+its programs differs considerably, and can be seen as being very intimidating in its difference.
+
+The first requirement of execution of an OpenCL program is a single or multiple OpenCL compatible devices. Once the devices
+are found on a host, programs need to be loaded to execute on the given devices. Note that programs here just refers to
+a collection of kernels. From these programs, specific kernels need to be explicitly specified to execute and supplied to
+a command queue to await execution. Of course, data to execute the kernels on needs to be loaded to the particular devices
+that the kernels will be executed on in the form of memory objects. After the kernel is done executing on the given data,
+the result needs to be sent back from the device to the host~\cite{slides:KhronosOpenCLOverview}. This long-winded sequence of execution can be visualised
+in~\figref{fig:opencl-execution}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.5]{img/opencl-execution}
+  \caption{The long sequence of execution provided by OpenCL. Note that most of these steps need to be explicitly stated
+  in the code.~\cite{slides:KhronosOpenCLOverview}}
+\label{fig:opencl-execution}
+\end{figure}
+
+Given the complexity of execution and the difference in paradigm and style of thinking needed, OpenCL kernels should be
+written with this in mind, rather than being constrained to work with a particular predicted element of data.
+A simple example demonstrating a change is shown in~\figref{fig:opencl-code}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.2]{img/opencl_code}
+  \caption{The big idea behind OpenCL; programming in $n$-dimensions rather than the, arguably, more ``traditional''
+  $1$-dimension imperative paradigm of programming.~\cite{slides:KhronosOpenCLOverview}}
+\label{fig:opencl-code}
+\end{figure}
+
+Note that OpenCL also specifies its own logical memory hierarchy that attempts to convey a generic physical hierarchy.
+A general overview of OpenCL's logical memory hierarchy can be summarised as follows:
+Each work-item (execution of a kernel) has its own private memory. Workgroups as a whole have their own shared
+local memory. All workgroups have access to an unsynchronised global/constant memory which can be filled from the main
+system memory. Note that memory management between hierarchy levels must be explicitly stated in the
+kernels~\cite{slides:KhronosOpenCLOverview}. The OpenCL hierarchical memory model is depicted in~\figref{fig:opencl-mem-model}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.5]{img/opencl-mem-model}
+  \caption{OpenCL's memory hierarchy.~\cite{slides:KhronosOpenCLOverview}}
+\label{fig:opencl-mem-model}
+\end{figure}
+% subsubsection overview_of_opencl (end)
+
+\subsubsection{Overview of CUDA} % (fold)
+\label{ssub:overview_of_cuda}
+Nvidia's CUDA is a proprietary framework that facilitates the use of compatible Nvidia GPUs in general purpose computing.
+Like OpenCL, it attempts very much to facilitate heterogeneous computing using GPUs and CPUs together. Much like OpenCL,
+CUDA has the concept of kernels being functions that are called by the host to execute on CUDA compatible devices. Kernels
+are, again, written in a subset of C with restrictions regarding memory access, and with language extensions~\cite{slides:KhronosOpenCLOverview}. A general
+idea of how CUDA attempts to facilitate heterogeneous computing can be seen in~\figref{fig:cuda-hetero}, which very much
+reflects what was previously stated in~\sectref{sub:why_programs_aren_t_written_just_for_gpus_rather_than_cpus}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.3]{img/cuda-hetero}
+  \caption{How CUDA attempts to facilitate heterogeneous computing, splitting the application into serial and parallel
+  code sections and executing them on the devices most appropriate for each.~\cite{slides:KhronosOpenCLOverview}}
+\label{fig:cuda-hetero}
+\end{figure}
+
+Where CUDA tries to differentiate itself from OpenCL is shown in its emphasis on how kernels are executed using its own
+concept of threads. These threads conceptually reflect traditional threads, as previously looked at in~\sectref{ssub:threads_execution}.
+Rather than a kernel being executed by a specific GPU core, CUDA splits a kernel into many different threads, even thousands,
+which are then grouped in ``blocks''. Blocks are then grouped into a ``grid'' which roughly reflects the logical architecture
+of the GPU. This whole kernel is then executed by the GPU as a grid of blocks of threads. This is the reason why Nvidia
+uses the term ``CUDA core'' to refer to their GPU cores; because the actual GPU cores physically represent a unit of
+execution in CUDA; the CUDA thread~\cite{slides:KhronosOpenCLOverview}.
+
+To divide the concept up some more, basically the individual threads are a logical representation of a physical core. Each
+block of threads is a logical representation of a streaming multiprocessor (as looked at in~\sectref{ssub:nvidia_maxwell_architecture} as SMMs).
+Finally, each grid is a logical representation of an entire GPU. Hence the CUDA framework allows an almost one-to-one
+logical matching with the physical device on which it is executing~\cite{slides:KhronosOpenCLOverview}. A visual depiction of this can be seen in~\figref{fig:cuda-mapping}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.2]{img/cuda-mapping}
+  \caption{The logical CUDA framework mapping to a physical CUDA-compatible GPU.~\cite{slides:KhronosOpenCLOverview}}
+\label{fig:cuda-mapping}
+\end{figure}
+
+Much like the physical layout of the SMMs, CUDA blocks afford cooperation with each other and as well as being able to be
+executed in parallel, they have the important the ability of being able to be easily executed in sequence and synchronised
+with each other, as is often important, even in mostly parallel processing.
+
+Much like OpenCL, CUDA specifies its own logical memory hierarchy which integrates into its logical architecture of
+threads, blocks of threads, and grids. The memory hierarchy can be viewed in more detail in~\figref{fig:cuda-mem}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.3]{img/cuda-mem}
+  \caption{CUDA's memory hierarchy. The small lines represent threads, each of which have their own register (the small
+  block) and local memory (the larger block). Each block of threads then have their own shared memory which then feeds
+  into the global memory.~\cite{slides:KhronosOpenCLOverview}}
+\label{fig:cuda-mem}
+\end{figure}
+
+% subsubsection overview_of_cuda (end)
+
+% subsection general_purpose_computing_on_gpus_or_gpgpu (end)
+
 % section differences_in_programming_the_gpu (end)
 
 

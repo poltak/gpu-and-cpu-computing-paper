@@ -533,17 +533,7 @@ kernels~\cite{slides:KhronosOpenCLOverview}. The OpenCL hierarchical memory mode
 Nvidia's CUDA is a proprietary framework that facilitates the use of compatible Nvidia GPUs in general purpose computing.
 Like OpenCL, it attempts very much to facilitate heterogeneous computing using GPUs and CPUs together. Much like OpenCL,
 CUDA has the concept of kernels being functions that are called by the host to execute on CUDA compatible devices. Kernels
-are, again, written in a subset of C with restrictions regarding memory access, and with language extensions~\cite{slides:KhronosOpenCLOverview}. A general
-idea of how CUDA attempts to facilitate heterogeneous computing can be seen in~\figref{fig:cuda-hetero}, which very much
-reflects what was previously stated in~\sectref{sub:why_programs_aren_t_written_just_for_gpus_rather_than_cpus}.
-
-\begin{figure}[ht]
-  \centering
-  \includegraphics[scale=0.3]{img/cuda-hetero}
-  \caption{How CUDA attempts to facilitate heterogeneous computing, splitting the application into serial and parallel
-  code sections and executing them on the devices most appropriate for each.~\cite{slides:KhronosOpenCLOverview}}
-\label{fig:cuda-hetero}
-\end{figure}
+are, again, written in a subset of C with restrictions regarding memory access, and with language extensions~\cite{slides:KhronosOpenCLOverview}.
 
 Where CUDA tries to differentiate itself from OpenCL is shown in its emphasis on how kernels are executed using its own
 concept of threads. These threads conceptually reflect traditional threads, as previously looked at in~\sectref{ssub:threads_execution}.
@@ -588,13 +578,61 @@ threads, blocks of threads, and grids. The memory hierarchy can be viewed in mor
 % section differences_in_programming_the_gpu (end)
 
 
-\section{Parallelism in the multi-core CPU and GPU} % (fold)
+\section{How the multi-core CPU and GPU can work together} % (fold)
 \label{sec:parallelism_in_the_multi_core_cpu_and_gpu}
+
+\subsection{Heterogeneous computing} % (fold)
+\label{sub:heterogeneous_computing}
+As touched on briefly in~\sectref{sec:differences_in_programming_the_gpu}, heterogeneous computing essentially refers
+to systems where there is more than just a single type of processor available~\cite{web:AMDHeteroComp}. This is
+arguably most common in consumer desktops and laptops that have both a CPU and GPU component, whether they be on the
+same chip or discrete components, so heterogeneous computing as a concept should not be so foreign a concept to most modern
+computer users. To make the best use of these different types of processors available in the system, a program can be split
+into discrete sections of code, each of which is to be executed by a various processor of which is optimised to run that particular
+section of code. Sticking with the GPU and CPU heterogeneous computing example, a program could be split into serial sections
+and parallel sections of code, with the serial sections being executed on the CPU and setting up the parallel sections to
+run in parallel on the GPU. An example of how CUDA facilitates this can be seen in~\figref{fig:cuda-hetero}. This very much
+reflects what was previously stated in~\sectref{sub:why_programs_aren_t_written_just_for_gpus_rather_than_cpus} regarding
+how not all tasks can simply be parallelised, and thus depend on certain events happening in sequence first. As this is
+very much a reality in modern computer systems, the use of heterogeneous computing systems provides an elegant solution
+to the problem, putting differently optimised resources to use.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.3]{img/cuda-hetero}
+  \caption{How CUDA attempts to facilitate heterogeneous computing, splitting the application into serial and parallel
+  code sections and executing them on the devices most appropriate for each.~\cite{slides:KhronosOpenCLOverview}}
+\label{fig:cuda-hetero}
+\end{figure}
+
+% subsection heterogeneous_computing (end)
+
+\subsection{Worked example of heterogeneous computing} % (fold)
+\label{sub:worked_example_of_heterogeneous_computing}
+To give an example of how a multi-core CPU and GPU can be used together in the one system to optimise performance, we
+can look at our earlier shown example of a parallel algorithm for multiplying matrices (shown in~\algoref{algo:matrix_mult_para}
+in~\sectref{sub:example_of_a_vs}).
+
+There are many possible ways this algorithm could be split into different parallel and serial parts to be run on the GPU
+and CPU, respectively. The most simple way to demonstrate it would be having most of the algorithm run on a specific core
+of the CPU, until the ``calculateDotProducts()'' function is treated as a kernel --- to use OpenCL/CUDA terminology ---
+and having many $n$ number of executions of this kernel running on the GPU in parallel, where $n$ is the number of dot
+products. These dot product calculations, as they are completely independent of other data, would greatly benefit from
+being executed on the highly parallel GPU, which the sequential parts of the algorithm, outside of the ``calculateDotProducts()''
+kernel, would benefit from being run on the more sequentially optimised CPU. As the number of dot products in matrix
+multiplications can get rather large, far larger than say the number of CPU cores present in any consumer CPU, these
+dot products could most likely easily be split amongst the hundreds, or even thousands, of GPU cores available. Furthermore,
+the simple multiplications and addition operations involved in performing a dot product is by no means a complicated
+task for a GPU core to perform.
+% subsection worked_example_of_heterogeneous_computing (end)
 
 % section parallelism_in_the_multi_core_cpu_and_gpu (end)
 
 
 \section{Conclusion} % (fold)
+Through looking at graphics processing units (GPUs) and variable-core central processing units (CPUs), we can see how
+they both vary considerably in underlying hardware architecture and general use-cases. Through the concept of heterogeneous
+computing, it is clear how they
 \label{sec:conclusion}
 
 % section conclusion (end)

@@ -70,8 +70,8 @@ processing power of the other.
 \label{sub:the_central_processing_unit}
 The central processing unit --- hereby referred to as the CPU --- is a fundamental piece of hardware within modern computers that handles
 the fetching, decoding and execution of each instruction of a computer program~\cite{web:CPUWiki}. It handles the processing
-of these instructions through the use of two key components: the arithmetic logic unit --- hereby referred to as the ALU
---- for basic arithmetical and logical operations, and the control unit --- hereby referred to as the CU --- for the input/output
+of these instructions through the use of two key components: the arithmetic logic unit for basic arithmetical and logical
+operations, and the control unit for the input/output
 operations between the CPU and memory, along with the overall control of the fetch, decode and execute cycle. Given the
 physical hardware constraints, only a single instruction may be processed at any given time by a CPU.
 % subsection the_central_processing_unit (end)
@@ -296,6 +296,43 @@ standard for message passing.
 % subsubsection message_passing_between_processes (end)
 
 % subsection enablers_for_programming_in_parallel (end)
+
+\subsection{Practical advice for programming the multi-core CPU} % (fold)
+\label{sub:practical_advice_for_programming_the_multi_core_cpu}
+After looking at some of the various methods for allowing the use of concurrent and parallel programming, it is important
+to briefly go over some practical advice for putting these concepts into practice. While the use of message passing, in
+particular MPI, is very popular and, as stated earlier, is something of a de facto standard for enabling parallelism in
+programs, it does not come without performance overheads. As message passing models often abstract the underlying system topology, systems
+employing message passing can have consequences of rather large performance hits, say if the system is distributed out
+over a large network, such as the Internet. On such a distributed system, each message has to face the possibility of
+opening up a new connection with a remote server, sending the message, closing the connection and all the rest of the
+overhead that goes with such an operation. Of course, from the programmer's point of view, as the abstractions are often
+large, they do not think of these possibilities. Although, saying that, the abstractions employed by such message passing
+models definitely serve a purpose: the programmer generally does not want to have to deal with a lot of these lower-level
+areas of the system, or write their code in such a way that it takes account different system topologies.
+
+In less distributed systems, a popular solution to combating the performance issues inherent in message passing models include
+the use of system threads. While threads also have performance hits, they can be far less significant than the IO-bound
+performance hits inherent in message passing models. Arguably the largest performance impact threads have on a system
+would be context-switching logic within the operating system. Briefly, context switching involves control being passed to
+the operating system kernel to allow it to save all the registers in use by the current thread (the context), before passing control
+to the new thread and loading that new thread's context.
+
+There are also problems with the use of threads in that if a far too large amount of threads are deployed on a system with less than that
+number of dedicated CPU cores, there may be little to no gain in performance compared with non-multi-threaded code. If a system becomes
+overloaded with threads, it is even possible for there to be negative impacts on performance. Care must be taken to find
+an optimal amount of threads for the task at hand along with the hardware available to get the most optimal performance gain
+out of using threads.
+
+Finally, the most simple model for enabling concurrent or parallel processing would be through the use of shared memory
+between processes. Shared memory was not covered in detail previously, due to its rather primitive nature and less feasibility
+of use in distributed parallel systems. Shared memory is essentially where two or more processes have a section of memory
+into which they can both read and write. This differs from normal process memory, where each process' virtual memory space is
+protected so that other processes cannot access it. Relative to the use of threads and message passing, shared memory has
+a far smaller performance overhead, although at the same time has a far smaller range of possible use-cases.
+
+% subsection practical_advice_for_programming_the_multi_core_cpu (end)
+
 
 % section programming_the_multi_core_cpu (end)
 
@@ -563,7 +600,7 @@ kernels~\cite{slides:KhronosOpenCLOverview}. The OpenCL hierarchical memory mode
 Nvidia's CUDA is a proprietary framework that facilitates the use of compatible Nvidia GPUs in general purpose computing.
 Like OpenCL, it attempts very much to facilitate heterogeneous computing using GPUs and CPUs together. Much like OpenCL,
 CUDA has the concept of kernels being functions that are called by the host to execute on CUDA compatible devices. Kernels
-are, again, written in a subset of C with restrictions regarding memory access, and with language extensions~\cite{slides:KhronosOpenCLOverview}.
+are, again, written in a subset of C with restrictions regarding memory access, and with language extensions~\cite{slides:CUDAOverview}.
 
 Where CUDA tries to differentiate itself from OpenCL is shown in its emphasis on how kernels are executed using its own
 concept of threads. These threads conceptually reflect traditional threads, as previously looked at in~\sectref{ssub:threads_execution}.
@@ -571,17 +608,17 @@ Rather than a kernel being executed by a specific GPU core, CUDA splits a kernel
 which are then grouped in ``blocks''. Blocks are then grouped into a ``grid'' which roughly reflects the logical architecture
 of the GPU. This whole kernel is then executed by the GPU as a grid of blocks of threads. This is the reason why Nvidia
 uses the term ``CUDA core'' to refer to their GPU cores; because the actual GPU cores physically represent a unit of
-execution in CUDA; the CUDA thread~\cite{slides:KhronosOpenCLOverview}.
+execution in CUDA; the CUDA thread~\cite{slides:CUDAOverview}.
 
 To divide the concept up some more, basically the individual threads are a logical representation of a physical core. Each
 block of threads is a logical representation of a streaming multiprocessor (as looked at in~\sectref{ssub:nvidia_maxwell_architecture} as SMMs).
 Finally, each grid is a logical representation of an entire GPU. Hence the CUDA framework allows an almost one-to-one
-logical matching with the physical device on which it is executing~\cite{slides:KhronosOpenCLOverview}. A visual depiction of this can be seen in~\figref{fig:cuda-mapping}.
+logical matching with the physical device on which it is executing~\cite{slides:CUDAOverview}. A visual depiction of this can be seen in~\figref{fig:cuda-mapping}.
 
 \begin{figure}[ht]
   \centering
   \includegraphics[scale=0.2]{img/cuda-mapping}
-  \caption{The logical CUDA framework mapping to a physical CUDA-compatible GPU.~\cite{slides:KhronosOpenCLOverview}}
+  \caption{The logical CUDA framework mapping to a physical CUDA-compatible GPU.~\cite{slides:CUDAOverview}}
 \label{fig:cuda-mapping}
 \end{figure}
 
@@ -597,13 +634,53 @@ threads, blocks of threads, and grids. The memory hierarchy can be viewed in mor
   \includegraphics[scale=0.3]{img/cuda-mem}
   \caption{CUDA's memory hierarchy. The small lines represent threads, each of which have their own register (the small
   block) and local memory (the larger block). Each block of threads then have their own shared memory which then feeds
-  into the global memory.~\cite{slides:KhronosOpenCLOverview}}
+  into the global memory.~\cite{slides:CUDAOverview}}
 \label{fig:cuda-mem}
 \end{figure}
 
 % subsubsection overview_of_cuda (end)
 
 % subsection general_purpose_computing_on_gpus_or_gpgpu (end)
+
+\subsection{Practical advice for programming the GPU} % (fold)
+\label{sub:practical_advice_in_programming_the_gpu}
+After looking at some of the modern solutions that enable GPU programming, it is important to briefly cover some practical
+advice on how to put these possibilities to use. What is important to emphasise about the previously looked at frameworks for
+programming GPUs, Nvidia's CUDA framework is proprietary and also only compatible with a subset of available Nvidia GPUs.
+So, while being a widely used framework in industry, any program that makes use of this framework is going to be severely
+limited in terms of compatibility and distribution possibilities as non-Nvidia GPUs, such as AMD GPUs, still make up a
+large enough percentage of GPU market share.
+
+To address this problem, the other framework enabling GPU programming that was covered, OpenCL, is an open
+solution which has support for a far larger range of GPUs from various vendors, including AMD, Nvidia, Intel and IBM.
+This means that code written in OpenCL will have far greater range of compatibility among different systems.
+
+Another aspect of note with using these frameworks is that they are often limited in the way of what is possible to write in each
+of the frameworks. As was covered previously, GPU hardware and architecture differs considerably from those found in CPUs, in
+ways such as certain hardware components that are taken for granted in modern CPUs are not present in GPUs. Thus the tools
+available for programming GPUs, while originally based off tools for programming CPUs, reflect those limitations when being
+used. Specifically, both CUDA and OpenCL make use of a subset of the C programming language as their main programming language.
+The reason that a subset of C is used reflects more as a constraint of what is possible with GPUs, rather than a mere
+design choice to limit the respective languages.
+
+In OpenCL, parts of ISO C99 that have been left out of the OpenCL language include:~\cite{slides:KhronosOpenCLOverview}
+
+\begin{itemize}
+  \item standard C99 header files
+  \item function pointers (including callback usage)
+  \item recursion
+  \item variable length arrays
+  \item bit fields
+\end{itemize}
+
+In CUDA, parts of the C programming language that are omitted include:~\cite{slides:CUDAOverview}
+
+\begin{itemize}
+  \item function pointers (including callback usage)
+  \item recursion
+  \item double precision floats are not IEEE 754 compliant
+\end{itemize}
+% subsection practical_advice_in_programming_the_gpu (end)
 
 % section differences_in_programming_the_gpu (end)
 
@@ -657,6 +734,25 @@ dot products could most likely easily be split amongst the hundreds, or even tho
 the simple multiplications and addition operations involved in performing a dot product is by no means a complicated
 task for a GPU core to perform.
 % subsection worked_example_of_heterogeneous_computing (end)
+
+\subsection{Practical advice for distributing workload across an available CPU and GPU} % (fold)
+\label{sub:practical_advice_for_distributing_workload_across_an_available_cpu_and_gpu}
+While much of the advice given in this section is somewhat intrinsic to the previous sections, it is important to outline
+it anyway. While a lot of the parallel code written will be targeted towards the CPU, it should first be investigated
+whether or not that code may have any performance gains from being processed on a GPU using an appropriate GPU programming
+framework. For more mathematically intensive tasks, it makes more sense to have them processed on a CPU, with the CPU's
+more ``primitive'' arithmetic focus. Although, if there exists such a largely parallel algorithm for calculating the
+particular problem, this is where it should be investigated whether or not looking to run it on the GPU would be of any
+worth.
+
+Take the example of matrix multiplication from earlier. Matrix multiplication, while in itself is a highly demanding
+mathematical procedure in terms of the number of calculations that must be made, because of the relative simplicity of
+each of those calculations, and the sheer number of calculations needed, it is a perfectly suited task for being run on the hundreds,
+or sometimes thousands, of GPU cores available on most modern GPUs. Of course, this is all possible based on the fact
+that these calculations that make up matrix multiplication are all independent of one another, thus affording parallel
+computation.
+
+% subsection practical_advice_for_distributing_workload_across_an_available_cpu_and_gpu (end)
 
 % section parallelism_in_the_multi_core_cpu_and_gpu (end)
 
